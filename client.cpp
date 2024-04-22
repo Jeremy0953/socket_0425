@@ -13,6 +13,8 @@
 #define PORT "45153" 
 
 #define MAXDATASIZE 500 // max data size of bytes we can hold one time
+
+unsigned int clientPort;
 #include <iostream>
 using namespace std;
 // From Beej’s guide to network programming
@@ -85,7 +87,6 @@ int main(int argc, char *argv[])
             return 2;
         }
         // From Experiment instructions, to get a dynamic port
-        unsigned int clientPort;
         struct sockaddr_in clinetAddress;
         bzero(&clinetAddress, sizeof(clinetAddress));
         socklen_t len = sizeof(clinetAddress);
@@ -121,62 +122,21 @@ int main(int argc, char *argv[])
             perror("recv");
         res = clientInput;
         // checkout the result
-        if (res == "0"){
+        if (clientInput[0] == '0'){
             cout<<username<<" received the result of authentication from Main Server using TCP over port"<<clientPort<<". Authentication failed: Username not found."<<endl;
         }
-        else if (res == "1"){
+        else if (clientInput[0] == '1'){
             cout<<username<<" received the result of authentication from Main Server using TCP over port"<<clientPort<<". Authentication failed: Password does not match."<<endl;
         }
-        else if (res == "2"){
+        else if (clientInput[0] == '2'){
             cout<<username<<" received the result of authentication from Main Server using TCP over port "<<clientPort<<". Authentication is successful."<<endl;
             break;
         }
-        close(sockfd);
     }
 
     string query_reply;
     // start the query
     while (true){
-        // From Beej’s guide to network programming
-        //set the TCP connect:
-        memset(&hints, 0, sizeof hints);
-        hints.ai_family = AF_UNSPEC;
-        hints.ai_socktype = SOCK_STREAM;
-
-        if ((rv = getaddrinfo(argv[1], PORT, &hints, &servinfo)) != 0) {
-            return 1;
-        }
-
-        for(p = servinfo; p != NULL; p = p->ai_next) {
-            if ((sockfd = socket(p->ai_family, p->ai_socktype,
-                    p->ai_protocol)) == -1) {
-                continue;
-            }
-            if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-                close(sockfd);
-                continue;
-            }
-
-            break;
-        }
-
-        if (p == NULL) {
-            return 2;
-        }
-        // From piazza
-        unsigned int clientPort;
-        struct sockaddr_in clinetAddress;
-        bzero(&clinetAddress, sizeof(clinetAddress));
-        socklen_t len = sizeof(clinetAddress);
-        if(getsockname(sockfd, (struct sockaddr *) &clinetAddress, &len)==-1){
-            perror("getsockname");
-            exit(1);
-        }
-        clientPort = ntohs(clinetAddress.sin_port);
-        inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)&clinetAddress),
-                s, sizeof s);
-        freeaddrinfo(servinfo);
-
         string bookcode, category;
         cout << "Please enter book code to query: ";
         getline(cin, bookcode);

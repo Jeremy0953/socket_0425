@@ -211,81 +211,88 @@ void processUDP(int sockfd_u, map<string,int> science, map<string,int> literatur
     }
 }
 
+void handleClient(int clientSocket, map<string, string>& maps);
 
-int main(){
-	std::cout << "Main Server is up and running." << endl;
+int main() {
+    cout << "Main Server is up and running." << endl;
     createUDP();
     createTCP();
     listenTCP();
-    map<string,string> maps;
+    map<string, string> maps;
     loadmember(maps);
-    string password, username, code;// all the info server received
-    // Do the authentication
+
     while (true) { 
-        //connect tcp
-        memset(clientMessage,'\0',sizeof(clientMessage));
         addr_len = sizeof their_addr;
         new_fd = accept(sockfd, (struct sockaddr*)&their_addr, &addr_len);
         if (new_fd == -1) {
             perror("accept");
+            continue;
         }
-        inet_ntop(their_addr.ss_family,get_in_addr((struct sockaddr*)&their_addr),s, sizeof s);
-        if (recv(new_fd, clientMessage,MAXDATASIZE, 0) == -1)
-					perror("recv");
-		username = clientMessage;
-        memset(clientMessage,'\0',sizeof(clientMessage));
-        if (recv(new_fd, clientMessage,MAXDATASIZE, 0) == -1)
-					perror("recv");
-		password = clientMessage;
-        std::cout<<"Main Server received the username and password from the client using TCP over port "<<SERVERM_TCP<<"."<<endl;
-        auto it = maps.find(username);
-            if (it != maps.end()) {
-                //std::cout << "Lengths: " << it->second.length() << ", " << password.length() << std::endl;
-                if (it->second == password)
-                {
-                    std::cout<<"Password "<<password<<" matches the username. Send a reply to the client."<<endl;
-                    memset(res_from_c, '\0', MAXDATASIZE);
-                    res_from_c[0] = '2';
-                    if ((numbytes = send(new_fd,res_from_c,  strlen(res_from_c)+1, 0)) == -1) {
-                        perror("send");
-                        exit(1);
-                    }
-                    close(new_fd);
-                    break;
-                }else{
-                    std::cout<<"Password "<<password<<" does not matches the username. Send a reply to the client."<<endl;
-                    memset(res_from_c, '\0', MAXDATASIZE);
-                    res_from_c[0] = '1';
-                    if ((numbytes = send(new_fd,res_from_c, strlen(res_from_c)+1, 0)) == -1) {
-                        perror("send");
-                        exit(1);
-                    }
-                    close(new_fd);
-                }
-            } else {
-                std::cout<<username<<" is not registered. Send a reply to the client"<<endl;
-                memset(res_from_c, '\0', MAXDATASIZE);
-                    res_from_c[0] = '0';
-                    if ((numbytes = send(new_fd,res_from_c, strlen(res_from_c)+1, 0)) == -1) {
-                        perror("send");
-                        exit(1);
-                    }
-                    close(new_fd);
-            }       
+
+        pid_t pid = fork();
+        if (pid == 0) { // Child process
+            close(sockfd); // 关闭监听socket，子进程不需要
+
+            // 在子进程中处理客户端请求
+            handleClient(new_fd, maps);
+            exit(0); // 处理完成后，子进程退出
+        } else if (pid > 0) { // Parent process
+            close(new_fd); // 父进程关闭已接受的socket
+        } else {
+            perror("fork");
+            close(new_fd);
+        }
     }
-    // Do the query
-    while (true) { 
-        //connect tcp
-        memset(clientMessage,'\0',sizeof(clientMessage));
-        addr_len = sizeof their_addr;
-        new_fd = accept(sockfd, (struct sockaddr*)&their_addr, &addr_len);
-        if (new_fd == -1) {
-            perror("accept");
+
+    return 0; // 正常情况下不会执行到这里
+}
+
+void handleClient(int clientSocket, map<string, string>& userMap) {
+    char buffer[MAXDATASIZE];
+    while (true) {
+        string username, password;
+
+        // Step 1: Authenticate
+        // Receive username
+        if (recv(clientSocket, buffer, MAXDATASIZE, 0) > 0) {
+            username = string(buffer);
         }
-        inet_ntop(their_addr.ss_family,get_in_addr((struct sockaddr*)&their_addr),s, sizeof s);
-        if (recv(new_fd, clientMessage,MAXDATASIZE, 0) == -1)
-					perror("recv");
-		code = clientMessage;
+
+        // Clear buffer and receive password
+        memset(buffer, 0, MAXDATASIZE);
+        if (recv(clientSocket, buffer, MAXDATASIZE, 0) > 0) {
+            password = string(buffer);
+        }
+        cout<<"Main Server received username"<<username<<" and password "<<password<<" from the client using TCP over port "<<SERVERM_TCP<<"."<<endl;
+        // Authentication check
+        auto it = userMap.find(username);
+        if (it != userMap.end() && it->second == password) {
+            cout<<"find"<<endl;
+            // Send authentication success
+            strcpy(buffer, "2\0"); // Assuming '2' means auth success
+            send(clientSocket, buffer, strlen(buffer), 0);
+            break;
+        } else if (it != userMap.end()) {
+            cout<<"wrong passwd"<<endl;
+            // Send authentication failure
+            strcpy(buffer, "1\0"); // Assuming '1' means auth failure
+            send(clientSocket, buffer, strlen(buffer), 0);
+        }else {
+            cout<<"not find"<<endl;
+            // Send username not found
+            strcpy(buffer, "0\0"); // Assuming '0' means username not found
+            send(clientSocket, buffer, strlen(buffer), 0);
+        }
+    }
+    // Step 2: Handle queries
+    while (true) {
+        memset(buffer, 0, MAXDATASIZE);
+        int bytesReceived = recv(clientSocket, buffer, MAXDATASIZE, 0);
+        if (bytesReceived <= 0) {
+            break; // Break the loop if error or connection closed
+        }
+
+        string code = string(buffer);
         
         std::cout<<"Main Server received the book request from client using TCP over port "<<SERVERM_TCP<<"."<<endl;
         memset(info, '\0', sizeof(info));
@@ -306,7 +313,6 @@ int main(){
                         perror("send");
                         exit(1);
                     }
-            close(new_fd);
             continue;
         }
         memset(buf,0,MAXDATASIZE);
@@ -347,6 +353,8 @@ int main(){
             exit(1);
         }
         cout << "Main Server sent the book status to the client." << endl;
-        close(new_fd);
-    }      
+    }
+
+    close(clientSocket);
 }
+
