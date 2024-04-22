@@ -51,6 +51,9 @@ struct sockaddr_storage their_addr_U;
 int rv_U;
 socklen_t addr_len_U;
 int numbytes_U;
+
+bool isGuest = false;
+bool isReserve = false;
 // From Beej’s guide to network programming
 void* get_in_addr(struct sockaddr* sa)
 {
@@ -263,26 +266,36 @@ void handleClient(int clientSocket, map<string, string>& userMap) {
         if (recv(clientSocket, buffer, MAXDATASIZE, 0) > 0) {
             password = string(buffer);
         }
+        if (password.length() == 0) {
+            isGuest = true;
+        }
         cout<<"Main Server received username"<<username<<" and password "<<password<<" from the client using TCP over port "<<SERVERM_TCP<<"."<<endl;
         // Authentication check
         auto it = userMap.find(username);
-        if (it != userMap.end() && it->second == password) {
-            //cout<<"find"<<endl;
-            // Send authentication success
-            strcpy(buffer, "2\0"); // Assuming '2' means auth success
-            send(clientSocket, buffer, strlen(buffer), 0);
-            break;
-        } else if (it != userMap.end()) {
-            //cout<<"wrong passwd"<<endl;
+        if (it!=userMap.end()) {
+            if(isGuest) {
+                // Send authentication success
+                strcpy(buffer, "3\0"); // Assuming '3' means guest
+                send(clientSocket, buffer, strlen(buffer), 0);
+                break;
+            }else {
+                if (it->second == password) {
+                    // Send authentication success
+                    strcpy(buffer, "2\0"); // Assuming '2' means auth success
+                    send(clientSocket, buffer, strlen(buffer), 0);
+                    break;
+                } else {
+                    // Send authentication failure
+                    strcpy(buffer, "1\0"); // Assuming '1' means auth failure
+                    send(clientSocket, buffer, strlen(buffer), 0);
+                }
+            }
+        } else {
             // Send authentication failure
-            strcpy(buffer, "1\0"); // Assuming '1' means auth failure
-            send(clientSocket, buffer, strlen(buffer), 0);
-        }else {
-            //cout<<"not find"<<endl;
-            // Send username not found
             strcpy(buffer, "0\0"); // Assuming '0' means username not found
             send(clientSocket, buffer, strlen(buffer), 0);
         }
+        
     }
     // Step 2: Handle queries
     while (true) {
@@ -291,25 +304,30 @@ void handleClient(int clientSocket, map<string, string>& userMap) {
         if (bytesReceived <= 0) {
             break; // Break the loop if error or connection closed
         }
-
+        if (buffer[0] == 'a') {
+            isReserve = false;
+        }
+        if (buffer[0] == 'r') {
+            isReserve = true;
+        }
         string code = string(buffer);
         
         std::cout<<"Main Server received the book request from client using TCP over port "<<SERVERM_TCP<<"."<<endl;
         memset(info, '\0', sizeof(info));
-        if (code.substr(0, 1) == "S"){
+        if (code.at(1) == 'S'){
             send_to_backen(SERVERS,code);
-            std::cout<<"Found "<<code<<" located at Server S. Send to Server S."<<endl;
-        }else if (code.substr(0, 1) == "H"){
+            std::cout<<"Found "<<buffer+1<<" located at Server S. Send to Server S."<<endl;
+        }else if (code.at(1) == 'H'){
             send_to_backen(SERVERH,code);
-            std::cout<<"Found "<<code<<" located at Server H. Send to Server H."<<endl;
-        }else if (code.substr(0, 1) == "L"){
+            std::cout<<"Found "<<buffer+1<<" located at Server H. Send to Server H."<<endl;
+        }else if (code.at(1) == 'L'){
             send_to_backen(SERVERL,code);
-            std::cout<<"Found "<<code<<" located at Server L. Send to Server L."<<endl;
+            std::cout<<"Found "<<buffer+1<<" located at Server L. Send to Server L."<<endl;
         }else{
-            cout<<"Did not find "<<code<<" in the book code list."<<endl;
+            cout<<"Did not find "<<buffer+1<<" in the book code list."<<endl;
             memset(info, '\0', MAXDATASIZE);
-                    info[0] = '2';
-                    if ((numbytes = send(new_fd,info, strlen(info)+1, 0)) == -1) {
+                    info[1] = '2';
+                    if ((numbytes = send(clientSocket,info, strlen(info)+1, 0)) == -1) {
                         perror("send");
                         exit(1);
                     }
@@ -340,15 +358,16 @@ void handleClient(int clientSocket, map<string, string>& userMap) {
             break;
         }
         if(info[0]=='0'){
-            cout<<"book "<<code<<" is available"<<endl;
+            cout<<"book "<<buffer+1<<" is available"<<endl;
         }else if(info[0]=='1'){
-            cout<<"book "<<code<<" is not available"<<endl;
+            cout<<"book "<<buffer+1<<" is not available"<<endl;
         }else if(info[0]=='2'){
-            cout<<"Did not find "<<code<<" in the book code list."<<endl;
+            cout<<"Did not find "<<buffer+1<<" in the book code list."<<endl;
         }else{
+            cout<<"info"<<info<<endl;
             perror("error udp message");
         }
-        if ((numbytes = send(new_fd,info, sizeof(info)+1, 0)) == -1) {
+        if ((numbytes = send(new_fd,info, MAXDATASIZE, 0)) == -1) {
             perror("send");
             exit(1);
         }

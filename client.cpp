@@ -49,6 +49,7 @@ int main(int argc, char *argv[])
     cout << "Client is up and running." << endl;
     string username;
     string password;
+    bool isGuest = false;
     int sockfd, numbytes;  
 	char buf[MAXDATASIZE];
 	struct addrinfo hints, *servinfo, *p;
@@ -108,9 +109,11 @@ int main(int argc, char *argv[])
         if ((numbytes = send(sockfd,clientInput, sizeof(clientInput), 0)) == -1) {
             exit(1);
         }
-
-        cout << "Please enter the password: ";
+        cout<<"Please enter the password: (Press “Enter” to skip)"<<endl;
         getline(cin, password);
+        if (password.length() == 0){
+            isGuest = true;
+        }
         memset(clientInput, '\0', sizeof(clientInput));
         strncpy(clientInput, encrypt(password).c_str(), MAXDATASIZE);
         if ((numbytes = send(sockfd, clientInput, sizeof(clientInput), 0)) == -1) {
@@ -121,6 +124,7 @@ int main(int argc, char *argv[])
         if (recv(sockfd, clientInput,MAXDATASIZE, 0) == -1)
             perror("recv");
         res = clientInput;
+        
         // checkout the result
         if (clientInput[0] == '0'){
             cout<<username<<" received the result of authentication from Main Server using TCP over port"<<clientPort<<". Authentication failed: Username not found."<<endl;
@@ -131,6 +135,8 @@ int main(int argc, char *argv[])
         else if (clientInput[0] == '2'){
             cout<<username<<" received the result of authentication from Main Server using TCP over port "<<clientPort<<". Authentication is successful."<<endl;
             break;
+        }else if (clientInput[0] == '3'){
+            break;
         }
     }
 
@@ -138,32 +144,46 @@ int main(int argc, char *argv[])
     // start the query
     while (true){
         string bookcode, category;
+        bool isReserve = false;
+        string command;
+        cout<<"Would you like to search for the availability or make a reservation? (Enter “Availability” to search for the availability or Enter “Reservation” to make a reservation ): <Availability or Reservation>"<<endl;
+        getline(cin, command);
+        isReserve = command == "Reservation";
+        
         cout << "Please enter book code to query: ";
         getline(cin, bookcode);
         
         // send bookcode to serverM
         memset(clientInput, '\0', sizeof(clientInput));
-        strncpy(clientInput, bookcode.c_str(), MAXDATASIZE);
+        if (isReserve){
+            clientInput[0] = 'r';
+        }
+        else{
+            clientInput[0] = 'a';
+        }
+        
+        strncpy(clientInput+1, bookcode.c_str(), MAXDATASIZE);
         if ((numbytes = send(sockfd,clientInput, sizeof(clientInput), 0)) == -1) {
             exit(1);
         }
         cout<<username<<" sent the request to the Main Server."<<endl;
-
-        if (recv(sockfd, clientInput,MAXDATASIZE, 0) == -1)
+        memset(buf, '\0', MAXDATASIZE);
+        if (recv(sockfd, buf,MAXDATASIZE, 0) == -1)
             perror("recv");
         cout<<"Response received from the Main Server on TCP port: "<<clientPort<<"."<<endl;
-        query_reply = clientInput;
-        if(query_reply=="0"){
+        
+        if(buf[0] == '0'){
             cout<<"The requested book "<<bookcode<<" is available in the library."<<endl;
-        }else if(query_reply == "1"){
+        }else if(buf[0] == '1'){
             cout<<"The requested book "<<bookcode<<" is NOT available in the library."<<endl;
-        }else if(query_reply == "2"){
+        }else if(buf[0] == '2'){
             cout<<"Not able to find the book-code "<<bookcode<<" in the system."<<endl;
         }else{
+            cout<<"buf"<<buf<<endl;
             perror("response Mserver");
         }
         cout << endl;
         cout << "-----Start a new request-----" <<endl;
-        close(sockfd);
     }
+    close(sockfd);
 }

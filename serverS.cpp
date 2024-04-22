@@ -90,14 +90,22 @@ int main(){
         if((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0, (struct sockaddr *)&their_addr, &addr_len))==-1){
             exit(1);
         }
-        bookcode = buf;
+        bool isReserve = false;
+        if (buf[0] == 'r'){
+            isReserve = true;
+        }
+        if (buf[0] == 'a'){
+            isReserve = false;
+        }
+        bookcode = string(buf+1);
         
         cout << "Server S received "<<bookcode<<" code from the Main Server." << endl;
         string check;
         auto it = books.find(bookcode);
         if (it != books.end()) {
             if(it->second>0){
-                it->second--;
+                if(isReserve)
+                    it->second--;
                 check = "0";
             }else{
                 check = "1";
