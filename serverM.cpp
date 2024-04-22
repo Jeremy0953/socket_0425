@@ -267,18 +267,18 @@ void handleClient(int clientSocket, map<string, string>& userMap) {
         // Authentication check
         auto it = userMap.find(username);
         if (it != userMap.end() && it->second == password) {
-            cout<<"find"<<endl;
+            //cout<<"find"<<endl;
             // Send authentication success
             strcpy(buffer, "2\0"); // Assuming '2' means auth success
             send(clientSocket, buffer, strlen(buffer), 0);
             break;
         } else if (it != userMap.end()) {
-            cout<<"wrong passwd"<<endl;
+            //cout<<"wrong passwd"<<endl;
             // Send authentication failure
             strcpy(buffer, "1\0"); // Assuming '1' means auth failure
             send(clientSocket, buffer, strlen(buffer), 0);
         }else {
-            cout<<"not find"<<endl;
+            //cout<<"not find"<<endl;
             // Send username not found
             strcpy(buffer, "0\0"); // Assuming '0' means username not found
             send(clientSocket, buffer, strlen(buffer), 0);
