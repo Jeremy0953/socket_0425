@@ -1,32 +1,41 @@
+// C Standard Library
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <sys/wait.h>
-#include <vector>
-#include <iostream> 
+#include <errno.h>
+#include <unistd.h>
+#include <cctype>
+
+// C++ Standard Library
+#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <vector>
 #include <map>
 #include <unordered_map>
-#define LOCAL_HOST "127.0.0.1" 
-#define MAXDATASIZE 500
-#define SERVERS "41326"
-#define SERVERD "42326"
-#define SERVERU "43326"
-#define SERVERM_TCP "45326"
-#define SERVERM "44326"
-#define SERVERU_UINT 43326
-#define SERVERD_UINT 42326
-#define SERVERS_UINT 41326
-#define BACKLOG 10 
+#include <algorithm>
+
+// System/Network headers
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/wait.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+
+constexpr int MAXDATASIZE = 500;
+constexpr int BACKLOG = 10;
+constexpr int SERVERU_UINT = 43326;
+constexpr int SERVERD_UINT = 42326;
+constexpr int SERVERS_UINT = 41326;
+
+const std::string LOCAL_HOST = "127.0.0.1";
+const std::string SERVERS = "41326";
+const std::string SERVERD = "42326";
+const std::string SERVERU = "43326";
+const std::string SERVERM_TCP = "45326";
+const std::string SERVERM = "44326";
 using namespace std;
 
 //TCP
@@ -189,29 +198,29 @@ void send_to_backen(const char* backen_port, string input){
 
 void loadmember(std::map<std::string, std::string>& maps) {
     std::ifstream inputFile("member.txt");
-    if (!inputFile.is_open()) {
+    if (!inputFile) {
         std::cerr << "Unable to open the file 'member.txt'.\n";
-        perror("Error");
-        return; // 早期返回，避免进一步执行
+        return; // Return early if file cannot be opened
     }
 
     std::string line;
     while (std::getline(inputFile, line)) {
         std::istringstream iss(line);
         std::string key, value;
-        if (getline(iss, key, ',') && getline(iss, value, ',')) {
-            key.erase(0, key.find_first_not_of(" \t"));
-            key.erase(key.find_last_not_of(" \t") + 1);
-            value.erase(0, value.find_first_not_of(" \t"));
-            value.erase(value.find_last_not_of(" \t") + 1);
-            maps[key] = value;
+        if (std::getline(iss, key, ',') && std::getline(iss, value, ',')) {
+            // Trim leading and trailing whitespace using a lambda and std::find_if
+            auto trim = [](const std::string &s) {
+                auto wsfront = std::find_if(s.begin(), s.end(), [](unsigned char c) { return !std::isspace(c); });
+                auto wsback = std::find_if(s.rbegin(), s.rend(), [](unsigned char c) { return !std::isspace(c); }).base();
+                return (wsback <= wsfront ? std::string() : std::string(wsfront, wsback));
+            };
+
+            maps[trim(key)] = trim(value);
         }
     }
 
-    std::cout << "Main Server loaded the member list.\n";
-    inputFile.close(); 
+    //std::cout << "Main Server loaded the member list.\n";
 }
-
 
 
 void handleClient(int clientSocket, map<string, string>& maps);

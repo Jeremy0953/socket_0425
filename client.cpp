@@ -1,18 +1,20 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
 #include <errno.h>
-#include <string.h>
-#include <netdb.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
+#include <unistd.h>
 #include <typeinfo>
-#define LOCAL_HOST "127.0.0.1"
-#define PORT "45326" 
 
-#define MAXDATASIZE 500 // max data size of bytes we can hold one time
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+
+constexpr int MAXDATASIZE = 500;
+
+const std::string LOCAL_HOST = "127.0.0.1"; // Define local host name
+const std::string PORT = "45326";
 
 unsigned int clientPort;
 #include <iostream>
@@ -56,8 +58,6 @@ int main(int argc, char *argv[])
 	int rv;
 	char s[INET6_ADDRSTRLEN];
     char clientInput[MAXDATASIZE];
-    
-    int cnt = 0;//for counting how many times entering the wrong username/password
     string res;
     // start for the user to input username and password
     while (true){

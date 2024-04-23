@@ -1,26 +1,34 @@
+// C Standard Library headers
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
 #include <string.h>
+#include <errno.h>
+#include <unistd.h>
+#include <cctype>
+
+// C++ Standard Library headers
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <map>
+#include <algorithm>
+
+// System/Network headers
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netdb.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 #include <sys/wait.h>
-#include <vector>
-#include <iostream>
-#include <fstream>
-#include <map>
-#include <sstream>
-#include <algorithm>
 
-#define LOCAL_HOST "127.0.0.1" //define local host name
-#define MAXDATASIZE 500
-#define SERVERU "43326"
-#define SERVERM "44326"
-#define file_path "suite.txt"
+constexpr int MAXDATASIZE = 500;
+
+const std::string LOCAL_HOST = "127.0.0.1"; // Define local host name
+const std::string SERVERU = "43326";
+const std::string SERVERM = "44326";
+const std::string FILE_PATH = "suite.txt"; // Use uppercase for constants by convention
+
 using namespace std;
 
 int sockfd;
@@ -57,32 +65,40 @@ void createUDP(){
 	
 }
 
-void loaddata(std::map<std::string, int>& books) {
+void loaddata(std::map<std::string, int>& rooms) {
     std::ifstream file(file_path);
-    if (!file.is_open()) {
-        std::cerr << "can't open file" << std::endl;
-        return;
+    if (!file) {
+        std::cerr << "Cannot open file " << file_path << std::endl;
+        return; // Early return if the file cannot be opened
     }
 
     std::string line;
     while (std::getline(file, line)) {
+        std::istringstream iss(line);
         std::string key;
         int value;
-        std::replace(line.begin(), line.end(), ',', ' ');  // Replace comma with space for easier parsing
-        std::istringstream iss(line);
-        
+
+        // Remove leading and trailing spaces
+        line.erase(0, line.find_first_not_of(" \t"));
+        line.erase(line.find_last_not_of(" \t") + 1);
+
+        // Replace commas with spaces for easier parsing
+        std::replace(line.begin(), line.end(), ',', ' ');
+
         if (iss >> key >> value) { // Parse the key and value directly
-            books[key] = value;
+            rooms[key] = value;
         } else {
-            std::cerr << "line error " << line << std::endl;
+            std::cerr << "Error parsing line: " << line << std::endl;
         }
     }
 
-    file.close();
+    //std::cout << "Data loaded successfully." << std::endl;
+    file.close(); // Ensure file is closed
 }
-void sendBookStatus(map<string,int> &books){
+
+void sendroomstatus(map<string,int> &rooms){
     //cout<<"begin send."<<endl;
-    for(const auto & it : books){
+    for(const auto & it : rooms){
         memset(&hints, 0, sizeof hints);
         hints.ai_family = AF_UNSPEC;
         hints.ai_socktype = SOCK_DGRAM;
@@ -107,11 +123,11 @@ void sendBookStatus(map<string,int> &books){
 int main(){
     createUDP();
     cout << "Server U is up and running using UDP on port " << SERVERU <<"." << endl;
-    map<string,int> books;
-    string bookcode;
-    loaddata(books);
+    map<string,int> rooms;
+    string roomcode;
+    loaddata(rooms);
     addr_len = sizeof their_addr;
-    sendBookStatus(books);
+    sendroomstatus(rooms);
     while(true){
         if((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0, (struct sockaddr *)&their_addr, &addr_len))==-1){
             exit(1);
@@ -124,30 +140,30 @@ int main(){
             isReserve = false;
         }
         
-        bookcode = string(buf+1);
+        roomcode = string(buf+1);
         if(isReserve){
             cout<<"The Server U received an availability request from the main server."<<endl;
         }else {
             cout<<"The Server U received a reservation request from the main server."<<endl;
         }
         memset(buf,'0',MAXDATASIZE);
-        auto it = books.find(bookcode);
+        auto it = rooms.find(roomcode);
         bool refresh = false;
-        if (it != books.end()) {
+        if (it != rooms.end()) {
             if(it->second>0){
                 if(isReserve){
                     it->second--;
                     refresh = true;
-                    cout<<"Successful reservation. The count of Room "<<bookcode<<" is now "<<it->second<<"."<<endl;
+                    cout<<"Successful reservation. The count of Room "<<roomcode<<" is now "<<it->second<<"."<<endl;
                 }else{
-                    cout<<"Room "<<bookcode<<" is available."<<endl;
+                    cout<<"Room "<<roomcode<<" is available."<<endl;
                 }
                 buf[0] = '0';
             }else{
                 if(isReserve){
-                    cout<<"Cannot make a reservation. Room "<<bookcode<<" is not available."<<endl;
+                    cout<<"Cannot make a reservation. Room "<<roomcode<<" is not available."<<endl;
                 }else{
-                    cout<<"Room "<<bookcode<<" is not available."<<endl;
+                    cout<<"Room "<<roomcode<<" is not available."<<endl;
                 }
                 buf[0] = '1';
             }
