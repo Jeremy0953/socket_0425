@@ -173,22 +173,81 @@ int main(int argc, char *argv[])
         if ((numbytes = send(sockfd,clientInput, sizeof(clientInput), 0)) == -1) {
             exit(1);
         }
-        cout<<username<<" sent the request to the Main Server."<<endl;
+        if(isGuest){
+            if(isReserve){
+                cout<<username<<" sent a reservation request to the main server."<<endl;
+            }else{
+                cout<<<username<<" sent an availability request to the main server."<<endl;
+            }
+        }else{
+            if(isReserve) {
+                cout<<username<<" sent a reservation request to the main server."<<endl;
+            }else {
+                cout<<username<<" sent an availability request to the main server."<<endl;
+            }
+        }
         memset(buf, '\0', MAXDATASIZE);
         if (recv(sockfd, buf,MAXDATASIZE, 0) == -1)
             perror("recv");
-        cout<<"Response received from the Main Server on TCP port: "<<clientPort<<"."<<endl;
-        
-        if(buf[0] == '0'){
-            cout<<"The requested book "<<bookcode<<" is available in the library."<<endl;
-        }else if(buf[0] == '1'){
-            cout<<"The requested book "<<bookcode<<" is NOT available in the library."<<endl;
-        }else if(buf[0] == '2'){
-            cout<<"Not able to find the book-code "<<bookcode<<" in the system."<<endl;
+        if(isGuest){
+            switch(buf[0]){
+                case '0':
+                    cout<<"The client received the response from the main server using TCP over port "<<PORT<<"."<<endl;
+                    cout<<"The requested room is available."<<endl;
+                    break;
+                case '1':
+                    cout<<"The client received the response from the main server using TCP over port "<<PORT<<"."<<endl;
+                    cout<<"The requested room is not available."<<endl;
+                    break;
+                case '2':
+                    cout<<"The client received the response from the main server using TCP over port "<<PORT<<"."<<endl;
+                    cout<<"Not able to find the room layout."<<endl;
+                    break;
+                case '3':
+                    cout<<"Permission denied: Guest cannot make a reservation."<<endl;
+                    break;
+                default:
+                    cout<<"not defined."<<endl;
+                    perror("response Mserver");
+                    break;
+            }
+    
         }else{
-            cout<<"buf"<<buf<<endl;
-            perror("response Mserver");
+            switch (buf[0]){
+                case '0':
+                    if(buf[1]=='a'){
+                        cout<<"The client received the response from the main server using TCP over port "<<PORT<<"."<<endl;
+                        cout<<"The requested room is available."<<endl;
+                    }else {
+                        cout<<"The client received the response from the main server using TCP over port "<<PORT<<"."<<endl;
+                        cout<<"Congratulation! The reservation for Room "<<bookcode<<" has been made."<<endl;
+                    }
+                    break;
+                case '1':
+                    if(buf[1]=='a'){
+                        cout<<"The client received the response from the main server using TCP over port "<<PORT<<"."<<endl;
+                        cout<<"The requested room is not available."<<endl;
+                    }else {
+                        cout<<"The client received the response from the main server using TCP over port "<<PORT<<"."<<endl;
+                        cout<<"Sorry! The requested room is not available."<<endl;
+                    }
+                    break;
+                case '2':
+                    if(buf[1]=='a'){
+                        cout<<"The client received the response from the main server using TCP over port "<<PORT<<"."<<endl;
+                        cout<<"Not able to find the room layout."
+                    }else {
+                        cout<<"The client received the response from the main server using TCP over port "<<PORT<<"."<<endl;
+                        cout<<"Oops! Not able to find the room."<<endl;
+                    }
+                    break;
+                default:
+                    cout<<"not defined."<<endl;
+                    perror("response Mserver");
+                    break;
+            }
         }
+
         cout << endl;
         cout << "-----Start a new request-----" <<endl;
     }

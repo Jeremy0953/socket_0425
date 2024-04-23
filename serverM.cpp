@@ -406,7 +406,7 @@ void handleClient(int clientSocket, map<string, string>& userMap) {
                 send_to_backen(SERVERL,code);
                 cout<<"The main server sent a request to Server D"<<endl;
             }else{
-                cout<<"Did not find "<<buffer+1<<" in the book code list."<<endl;
+                //cout<<"Did not find "<<buffer+1<<" in the book code list."<<endl;
                 memset(info, '\0', MAXDATASIZE);
                         info[1] = '2';
                         if ((numbytes = send(clientSocket,info, strlen(info)+1, 0)) == -1) {
