@@ -13,8 +13,8 @@
 
 constexpr int MAXDATASIZE = 500;
 
-const std::string LOCAL_HOST = "127.0.0.1"; // Define local host name
-const std::string PORT = "45326";
+#define LOCAL_HOST  "127.0.0.1" // Define local host name
+#define PORT  "45326"
 
 unsigned int clientPort;
 #include <iostream>

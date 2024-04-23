@@ -24,10 +24,10 @@
 
 constexpr int MAXDATASIZE = 500;
 
-const std::string LOCAL_HOST = "127.0.0.1"; // Define local host name
-const std::string SERVERD = "42326";
-const std::string SERVERM = "44326";
-const std::string FILE_PATH = "double.txt"; // Use uppercase for constants by convention
+#define LOCAL_HOST  "127.0.0.1" // Define local host name
+#define SERVERD  "42326"
+#define SERVERM  "44326"
+#define file_path  "double.txt" // Use uppercase for constants by convention
 
 using namespace std;
 

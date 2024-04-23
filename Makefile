@@ -5,6 +5,9 @@ all: serverM.cpp serverU.cpp serverD.cpp serverS.cpp client.cpp
 	g++ -std=c++17 -o serverS serverS.cpp
 	g++ -std=c++17 -o client client.cpp 
 
+.PHONY : clean
+clean :
+	-rm serverD serverM serverS serverU client
 
 .PHONY: client
 client:

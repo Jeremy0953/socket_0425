@@ -30,12 +30,12 @@ constexpr int SERVERU_UINT = 43326;
 constexpr int SERVERD_UINT = 42326;
 constexpr int SERVERS_UINT = 41326;
 
-const std::string LOCAL_HOST = "127.0.0.1";
-const std::string SERVERS = "41326";
-const std::string SERVERD = "42326";
-const std::string SERVERU = "43326";
-const std::string SERVERM_TCP = "45326";
-const std::string SERVERM = "44326";
+#define LOCAL_HOST  "127.0.0.1"
+#define SERVERS  "41326"
+#define SERVERD  "42326"
+#define SERVERU  "43326"
+#define SERVERM_TCP  "45326"
+#define SERVERM  "44326"
 using namespace std;
 
 //TCP
