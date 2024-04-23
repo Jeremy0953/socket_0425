@@ -154,12 +154,13 @@ int main(int argc, char *argv[])
         cout << "Please enter the room code: ";
         getline(cin, bookcode);
         string command;
-        cout<<"Would you like to search for the availability or make a reservation? (Enter “Availability” to search for the availability or Enter “Reservation” to make a reservation ): <Availability or Reservation>"<<endl;
-        getline(cin, command);
+        while(1){
+            cout<<"Would you like to search for the availability or make a reservation? (Enter “Availability” to search for the availability or Enter “Reservation” to make a reservation ): <Availability or Reservation>"<<endl;
+            getline(cin, command);
+            if(command=="Reservation" || command == "Availability")
+                break;
+        }
         isReserve = command == "Reservation";
-        
-        
-        
         // send bookcode to serverM
         memset(clientInput, '\0', sizeof(clientInput));
         if (isReserve){

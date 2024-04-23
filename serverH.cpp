@@ -19,7 +19,7 @@
 #define MAXDATASIZE 500
 #define SERVERH "43153"
 #define SERVERM "44153"
-#define file_path "history.txt"
+#define file_path "suite.txt"
 using namespace std;
 
 int sockfd;
@@ -79,7 +79,7 @@ void loaddata(map<string,int> &books){
     return;
 }
 void sendBookStatus(map<string,int> &books){
-    cout<<"begin send."<<endl;
+    //cout<<"begin send."<<endl;
     for(const auto & it : books){
         memset(&hints, 0, sizeof hints);
         hints.ai_family = AF_UNSPEC;
@@ -94,7 +94,7 @@ void sendBookStatus(map<string,int> &books){
             exit(1);
         }
     }
-    cout<<"send end"<<endl;
+    //cout<<"send end"<<endl;
     memset(buf,'0',MAXDATASIZE);
     buf[0] = '2'; //finished;
     if ((numbytes = sendto(sockfd, buf, strlen(buf)+1, 0, servinfo->ai_addr, servinfo->ai_addrlen)) == -1){

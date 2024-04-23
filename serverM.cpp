@@ -144,7 +144,6 @@ void receiveRouteTable() {
         if((numbytes = recvfrom(sockfd_U, buf, MAXDATASIZE-1 , 0, (struct sockaddr *)&their_addr, &addr_len))==-1){
                 exit(1);
             }
-        cout << "The main server received the response from serverCS using UDP over port " << SERVERM << "." << endl;
         strncpy(info, buf, MAXDATASIZE);
         struct sockaddr_in *ipv4 = (struct sockaddr_in *)&their_addr;
         uint16_t port = ntohs(ipv4->sin_port);
@@ -166,7 +165,7 @@ void receiveRouteTable() {
                 perror("port error");
                 break;
             }
-            cout<<"The main server has received the room status from Server "<<backenCode<<" using UDP over port "<<SERVERM<<".";
+            cout<<"The main server has received the room status from Server "<<backenCode<<" using UDP over port "<<SERVERM<<"."<<endl;
             continue;
         }
         route_table[string(buf)] = port; 
@@ -420,8 +419,6 @@ void handleClient(int clientSocket, map<string, string>& userMap) {
         if((numbytes = recvfrom(sockfd_U, buf, MAXDATASIZE-1 , 0, (struct sockaddr *)&their_addr, &addr_len))==-1){
                 exit(1);
             }
-        cout << "The main server received the response from serverCS using UDP over port " 
-        << SERVERM << "." << endl;
         strncpy(info, buf, MAXDATASIZE);
         struct sockaddr_in *ipv4 = (struct sockaddr_in *)&their_addr;
         uint16_t port = ntohs(ipv4->sin_port);
