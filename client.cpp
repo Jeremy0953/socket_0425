@@ -177,7 +177,7 @@ int main(int argc, char *argv[])
             if(isReserve){
                 cout<<username<<" sent a reservation request to the main server."<<endl;
             }else{
-                cout<<<username<<" sent an availability request to the main server."<<endl;
+                cout<<username<<" sent an availability request to the main server."<<endl;
             }
         }else{
             if(isReserve) {
@@ -235,7 +235,7 @@ int main(int argc, char *argv[])
                 case '2':
                     if(buf[1]=='a'){
                         cout<<"The client received the response from the main server using TCP over port "<<PORT<<"."<<endl;
-                        cout<<"Not able to find the room layout."
+                        cout<<"Not able to find the room layout."<<endl;
                     }else {
                         cout<<"The client received the response from the main server using TCP over port "<<PORT<<"."<<endl;
                         cout<<"Oops! Not able to find the room."<<endl;

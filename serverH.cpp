@@ -128,7 +128,7 @@ int main(){
         }else {
             cout<<"The Server U received a reservation request from the main server."<<endl;
         }
-        memset(buf,'0',MAXDATASIZE)
+        memset(buf,'0',MAXDATASIZE);
         auto it = books.find(bookcode);
         bool refresh = false;
         if (it != books.end()) {
