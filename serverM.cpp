@@ -18,14 +18,14 @@
 #include <unordered_map>
 #define LOCAL_HOST "127.0.0.1" 
 #define MAXDATASIZE 500
-#define SERVERS "41153"
-#define SERVERL "42153"
-#define SERVERH "43153"
-#define SERVERM_TCP "45153"
-#define SERVERM "44153"
-#define SERVERH_UINT 43153
-#define SERVERL_UINT 42153
-#define SERVERS_UINT 41153
+#define SERVERS "41326"
+#define SERVERD "42326"
+#define SERVERU "43326"
+#define SERVERM_TCP "45326"
+#define SERVERM "44326"
+#define SERVERU_UINT 43326
+#define SERVERD_UINT 42326
+#define SERVERS_UINT 41326
 #define BACKLOG 10 
 using namespace std;
 
@@ -152,10 +152,10 @@ void receiveRouteTable() {
             char backenCode;
             switch (port)
             {
-            case SERVERH_UINT:
+            case SERVERU_UINT:
                 backenCode = 'U';
                 break;
-            case SERVERL_UINT:
+            case SERVERD_UINT:
                 backenCode= 'D';
                 break;
             case SERVERS_UINT:
@@ -187,68 +187,32 @@ void send_to_backen(const char* backen_port, string input){
 
 }
 
-void loadmember(map<string,string> &maps){
-    ifstream inputFile("member.txt");
+void loadmember(std::map<std::string, std::string>& maps) {
+    std::ifstream inputFile("member.txt");
     if (!inputFile.is_open()) {
-        std::cerr << "Unable to open the file." << std::endl;
-        perror("no member.txt");
+        std::cerr << "Unable to open the file 'member.txt'.\n";
+        perror("Error");
+        return; // 早期返回，避免进一步执行
     }
-    string line;
+
+    std::string line;
     while (std::getline(inputFile, line)) {
-        istringstream iss(line);
-        string key, value;
+        std::istringstream iss(line);
+        std::string key, value;
         if (getline(iss, key, ',') && getline(iss, value, ',')) {
-        key.erase(0, key.find_first_not_of(" \t"));
-        key.erase(key.find_last_not_of(" \t") + 1);
-        value.erase(0, value.find_first_not_of(" \t"));
-        value.erase(value.find_last_not_of(" \t") + 1);
-        std::istringstream valueStream(value);
-        if (valueStream >> value) {
+            key.erase(0, key.find_first_not_of(" \t"));
+            key.erase(key.find_last_not_of(" \t") + 1);
+            value.erase(0, value.find_first_not_of(" \t"));
+            value.erase(value.find_last_not_of(" \t") + 1);
             maps[key] = value;
         }
     }
-    }
-    std::cout<<"Main Server loaded the member list."<<endl;
-    inputFile.close();
+
+    std::cout << "Main Server loaded the member list.\n";
+    inputFile.close(); 
 }
 
-void load_list(string buf,map<string,int> &maps){
-    std::vector<std::string> tokens;
-    std::istringstream tokenStream(buf);
-    std::string token;
-    while (getline(tokenStream, token, ',')) {
-        tokens.push_back(token);
-    }
-    for(int i = 0; i<tokens.size(); i = i+2) {
-        maps[tokens[i]] = stoi(tokens[i+1]);
-    }
-}
-void processUDP(int sockfd_u, map<string,int> science, map<string,int> literature, map<string,int> history){
-    char buffer[MAXDATASIZE];
-    sockaddr_in clientAddress;
-    socklen_t clientAddrLen = sizeof(clientAddress);
-    ssize_t bytesRead = recvfrom(sockfd_u, buffer, sizeof(buffer), 0,
-                                 reinterpret_cast<sockaddr*>(&clientAddress), &clientAddrLen);
-    string res;
-    if (bytesRead == -1) {
-        perror("recvfrom");
-    } else {
-        buffer[bytesRead] = '\0';
-        res = string(buf);
-        if(ntohs(clientAddress.sin_port)==atoi(SERVERS)){
-            load_list(res,science);
-            std::cout<<"Main Server received the book code list from serverS using UDP over port "<<SERVERM<<"."<<endl;
-        }else if(ntohs(clientAddress.sin_port)==atoi(SERVERL)){
-            load_list(res,literature);
-            std::cout<<"Main Server received the book code list from serverL using UDP over port "<<SERVERM<<"."<<endl;
-        }else if(ntohs(clientAddress.sin_port)==atoi(SERVERH)){
-            load_list(res,history);
-            std::cout<<"Main Server received the book code list from serverH using UDP over port "<<SERVERM<<"."<<endl;
-        }else{
-            perror("port error");
-        }
-    }
-}
+
 
 void handleClient(int clientSocket, map<string, string>& maps);
 
@@ -379,12 +343,12 @@ void handleClient(int clientSocket, map<string, string>& userMap) {
         auto it = route_table.find(bookcode);
         if (it != route_table.end()) {
             switch(it->second) {
-                case SERVERH_UINT:
-                    send_to_backen(SERVERH,code);
+                case SERVERU_UINT:
+                    send_to_backen(SERVERU,code);
                     cout<<"The main server sent a request to Server U"<<endl;
                     break;
-                case SERVERL_UINT:
-                    send_to_backen(SERVERL, code);
+                case SERVERD_UINT:
+                    send_to_backen(SERVERD, code);
                     cout<<"The main server sent a request to Server D"<<endl;
                     break;
                 case SERVERS_UINT:
@@ -399,15 +363,16 @@ void handleClient(int clientSocket, map<string, string>& userMap) {
             send_to_backen(SERVERS,code);
             cout<<"The main server sent a request to Server S"<<endl;
             }else if (code.at(1) == 'U'){
-                send_to_backen(SERVERH,code);
+                send_to_backen(SERVERU,code);
                 cout<<"The main server sent a request to Server U"<<endl;
             }else if (code.at(1) == 'D'){
-                send_to_backen(SERVERL,code);
+                send_to_backen(SERVERD,code);
                 cout<<"The main server sent a request to Server D"<<endl;
             }else{
                 //cout<<"Did not find "<<buffer+1<<" in the book code list."<<endl;
                 memset(info, '\0', MAXDATASIZE);
-                        info[1] = '2';
+                        info[0] = '2';
+                        info[1] = buffer[0];
                         if ((numbytes = send(clientSocket,info, strlen(info)+1, 0)) == -1) {
                             perror("send");
                             exit(1);
@@ -425,10 +390,10 @@ void handleClient(int clientSocket, map<string, string>& userMap) {
         char backenCode;
         switch (port)
         {
-        case SERVERH_UINT:
+        case SERVERU_UINT:
             backenCode = 'U';
             break;
-        case SERVERL_UINT:
+        case SERVERD_UINT:
             backenCode = 'D';
             break;
         case SERVERS_UINT:

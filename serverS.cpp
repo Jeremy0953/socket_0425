@@ -14,11 +14,12 @@
 #include <fstream>
 #include <map>
 #include <sstream>
+#include <algorithm>
 
 #define LOCAL_HOST "127.0.0.1" //define local host name
 #define MAXDATASIZE 500
-#define SERVERS "41153"
-#define SERVERM "44153"
+#define SERVERS "41326"
+#define SERVERM "44326"
 #define file_path "single.txt"
 using namespace std;
 
@@ -56,27 +57,28 @@ void createUDP(){
 	
 }
 
-void loaddata(map<string,int> &books){
+void loaddata(std::map<std::string, int>& books) {
     std::ifstream file(file_path);
     if (!file.is_open()) {
         std::cerr << "can't open file" << std::endl;
         return;
     }
+
     std::string line;
     while (std::getline(file, line)) {
-    std::istringstream iss(line);
-    std::string key;
-    char comma;
-    int value;
-    if (std::getline(iss, key, ',') && iss >> value) {
-        books[key] = value;
-    } else {
-        std::cerr << "line error " << line << std::endl;
+        std::string key;
+        int value;
+        std::replace(line.begin(), line.end(), ',', ' ');  // Replace comma with space for easier parsing
+        std::istringstream iss(line);
+        
+        if (iss >> key >> value) { // Parse the key and value directly
+            books[key] = value;
+        } else {
+            std::cerr << "line error " << line << std::endl;
+        }
     }
-}
 
     file.close();
-    return;
 }
 
 void sendBookStatus(map<string,int> &books){

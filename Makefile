@@ -1,9 +1,9 @@
-all: serverM.cpp serverH.cpp serverL.cpp serverS.cpp client.cpp
-	g++ -std=c++11 -o serverM serverM.cpp
-	g++ -std=c++11 -o serverL serverL.cpp
-	g++ -std=c++11 -o serverH serverH.cpp
-	g++ -std=c++11 -o serverS serverS.cpp
-	g++ -std=c++11 -o client client.cpp 
+all: serverM.cpp serverU.cpp serverD.cpp serverS.cpp client.cpp
+	g++ -std=c++17 -o serverM serverM.cpp
+	g++ -std=c++17 -o serverD serverD.cpp
+	g++ -std=c++17 -o serverU serverU.cpp
+	g++ -std=c++17 -o serverS serverS.cpp
+	g++ -std=c++17 -o client client.cpp 
 
 
 .PHONY: client
@@ -15,13 +15,13 @@ serverM:
 	./serverM
 
 .PHONY: serverS
-serverC:
+serverS:
 	./serverS
 
-.PHONY: serverH
-serverEE:
-	./serverH
+.PHONY: serverU
+serverU:
+	./serverU
 
-.PHONY: serverL
-serverCS:
-	./serverL
+.PHONY: serverD
+serverD:
+	./serverD

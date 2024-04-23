@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 #include <typeinfo>
 #define LOCAL_HOST "127.0.0.1"
-#define PORT "45153" 
+#define PORT "45326" 
 
 #define MAXDATASIZE 500 // max data size of bytes we can hold one time
 
@@ -136,7 +136,6 @@ int main(int argc, char *argv[])
             cout<<"Failed login: Password does not match."<<endl;
         }
         else if (clientInput[0] == '2'){
-            cout<<username<<" received the result of authentication from Main Server using TCP over port "<<clientPort<<". Authentication is successful."<<endl;
             break;
         }else if (clientInput[0] == '3'){
             break;
@@ -155,7 +154,7 @@ int main(int argc, char *argv[])
         getline(cin, bookcode);
         string command;
         while(1){
-            cout<<"Would you like to search for the availability or make a reservation? (Enter “Availability” to search for the availability or Enter “Reservation” to make a reservation ): <Availability or Reservation>"<<endl;
+            cout<<"Would you like to search for the availability or make a reservation? (Enter “Availability” to search for the availability or Enter “Reservation” to make a reservation ): ";
             getline(cin, command);
             if(command=="Reservation" || command == "Availability")
                 break;
@@ -208,6 +207,7 @@ int main(int argc, char *argv[])
                     cout<<"Permission denied: Guest cannot make a reservation."<<endl;
                     break;
                 default:
+                    cout<<buf<<endl;
                     cout<<"not defined."<<endl;
                     perror("response Mserver");
                     break;
@@ -243,6 +243,7 @@ int main(int argc, char *argv[])
                     }
                     break;
                 default:
+                    cout<<buf<<endl;
                     cout<<"not defined."<<endl;
                     perror("response Mserver");
                     break;

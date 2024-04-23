@@ -14,12 +14,13 @@
 #include <fstream>
 #include <map>
 #include <sstream>
+#include <algorithm>
 
 #define LOCAL_HOST "127.0.0.1" //define local host name
 #define MAXDATASIZE 500
-#define SERVERL "42153"
-#define SERVERM "44153"
-#define file_path "double.txt"
+#define SERVERU "43326"
+#define SERVERM "44326"
+#define file_path "suite.txt"
 using namespace std;
 
 int sockfd;
@@ -37,7 +38,7 @@ void createUDP(){
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;
 	
-	if ((rv = getaddrinfo(LOCAL_HOST, SERVERL, &hints, &servinfo)) != 0){
+	if ((rv = getaddrinfo(LOCAL_HOST, SERVERU, &hints, &servinfo)) != 0){
 		exit(1);
 	}	
     for(p = servinfo; p != NULL; p = p->ai_next){
@@ -56,27 +57,28 @@ void createUDP(){
 	
 }
 
-void loaddata(map<string,int> &books){
+void loaddata(std::map<std::string, int>& books) {
     std::ifstream file(file_path);
     if (!file.is_open()) {
         std::cerr << "can't open file" << std::endl;
         return;
     }
+
     std::string line;
     while (std::getline(file, line)) {
-    std::istringstream iss(line);
-    std::string key;
-    char comma;
-    int value;
-    if (std::getline(iss, key, ',') && iss >> value) {
-        books[key] = value;
-    } else {
-        std::cerr << "line error " << line << std::endl;
+        std::string key;
+        int value;
+        std::replace(line.begin(), line.end(), ',', ' ');  // Replace comma with space for easier parsing
+        std::istringstream iss(line);
+        
+        if (iss >> key >> value) { // Parse the key and value directly
+            books[key] = value;
+        } else {
+            std::cerr << "line error " << line << std::endl;
+        }
     }
-}
 
     file.close();
-    return;
 }
 void sendBookStatus(map<string,int> &books){
     //cout<<"begin send."<<endl;
@@ -100,11 +102,11 @@ void sendBookStatus(map<string,int> &books){
     if ((numbytes = sendto(sockfd, buf, strlen(buf)+1, 0, servinfo->ai_addr, servinfo->ai_addrlen)) == -1){
             exit(1);
     }
-    cout<<"The Server D has sent the room status to the main server."<<endl;
+    cout<<"The Server U has sent the room status to the main server."<<endl;
 }
 int main(){
     createUDP();
-    cout << "Server D is up and running using UDP on port " << SERVERL <<"." << endl;
+    cout << "Server U is up and running using UDP on port " << SERVERU <<"." << endl;
     map<string,int> books;
     string bookcode;
     loaddata(books);
@@ -121,11 +123,12 @@ int main(){
         if (buf[0] == 'a'){
             isReserve = false;
         }
+        
         bookcode = string(buf+1);
         if(isReserve){
-            cout<<"The Server D received an availability request from the main server."<<endl;
+            cout<<"The Server U received an availability request from the main server."<<endl;
         }else {
-            cout<<"The Server D received a reservation request from the main server."<<endl;
+            cout<<"The Server U received a reservation request from the main server."<<endl;
         }
         memset(buf,'0',MAXDATASIZE);
         auto it = books.find(bookcode);
@@ -156,21 +159,20 @@ int main(){
             }
             buf[0] = '2';
         } 
-        if(isReserve){
+        if (isReserve)
             buf[1] = 'r';
-        }else{
+        else
             buf[1] = 'a';
-        }
         if ((numbytes = sendto(sockfd, buf, 3, 0, (struct sockaddr *)&their_addr, addr_len)) == -1){
             exit(1);
         }
         if(isReserve){
             if(refresh)
-                cout<<"The Server D finished sending the response and the updated room status to the main server."<<endl;
+                cout<<"The Server U finished sending the response and the updated room status to the main server."<<endl;
             else
-                cout<<"The Server D finished sending the response to the main server."<<endl;
+                cout<<"The Server U finished sending the response to the main server."<<endl;
         }else{
-            cout<<"The Server D finished sending the response to the main server."<<endl;
+            cout<<"The Server U finished sending the response to the main server."<<endl;
         }
     }
 	freeaddrinfo(servinfo);

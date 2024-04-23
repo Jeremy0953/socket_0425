@@ -21,7 +21,7 @@ c) 在这个项目中,实现了一个带有身份认证的图书管理系统，�
 
 d) 
 - client.cpp: Connect to the main server over TCP. Send over the username and password to identify the user. Then, send the bookcode for the query. Show the result on the screen.
-- serverM.cpp: Connect to the client over TCP. Connect to the serverH, serverL, and serverS over UDP. Get the information from the client and send it to the corresponding server and give the result back to the client.
+- serverM.cpp: Connect to the client over TCP. Connect to the SERVERU, SERVERD, and serverS over UDP. Get the information from the client and send it to the corresponding server and give the result back to the client.
 - serverS/H/L: 根据serverM转发过来的bookcode查询书本的状态 然后图书状态转发给主服务器
 
 
@@ -51,7 +51,7 @@ e) The output on the screen is the same as requested. Inside the coding files:
         - "1" means book is not available.
         - "2" means book does not exist.
 
-- serverH/S/L:
+- SERVERU/S/L:
     - map<string,int>用于存放图书信息
     - All the information sent or received in char[].
     - 根据收到的code以及自身的map,将结果返回主服务器
