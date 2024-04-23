@@ -101,7 +101,7 @@ void sendBookStatus(map<string,int> &books){
     if ((numbytes = sendto(sockfd, buf, strlen(buf)+1, 0, servinfo->ai_addr, servinfo->ai_addrlen)) == -1){
             exit(1);
     }
-    cout<<"The Server <S/D/U> has sent the room status to the main server."<<endl;
+    cout<<"The Server S has sent the room status to the main server."<<endl;
 }
 int main(){
     createUDP();
@@ -123,25 +123,55 @@ int main(){
             isReserve = false;
         }
         bookcode = string(buf+1);
-        
-        cout << "Server S received "<<bookcode<<" code from the Main Server." << endl;
-        string check;
+        if(isReserve){
+            cout<<"The Server S received an availability request from the main server."<<endl;
+        }else {
+            cout<<"The Server S received a reservation request from the main server."<<endl;
+        }
+        memset(buf,'0',MAXDATASIZE);
         auto it = books.find(bookcode);
+        bool refresh = false;
         if (it != books.end()) {
             if(it->second>0){
-                if(isReserve)
+                if(isReserve){
                     it->second--;
-                check = "0";
+                    refresh = true;
+                    cout<<"Successful reservation. The count of Room "<<bookcode<<" is now "<<it->second<<"."<<endl;
+                }else{
+                    cout<<"Room "<<bookcode<<" is available."<<endl;
+                }
+                buf[0] = '0';
             }else{
-                check = "1";
+                if(isReserve){
+                    cout<<"Cannot make a reservation. Room "<<bookcode<<" is not available."<<endl;
+                }else{
+                    cout<<"Room "<<bookcode<<" is not available."<<endl;
+                }
+                buf[0] = '1';
             }
         } else {
-            check = "2";
-        } 
-        if ((numbytes = sendto(sockfd, check.c_str(), strlen(check.c_str())+1, 0, (struct sockaddr *)&their_addr, addr_len)) == -1){
+            if(isReserve){
+                cout<<"Cannot make a reservation. Not able to find the room layout."<<endl;
+            }else{
+                cout<<"Not able to find the room layout."<<endl;
+            }
+            buf[0] = '2';
+        }
+        if (isReserve)
+            buf[1] = 'r';
+        else
+            buf[1] = 'a';
+        if ((numbytes = sendto(sockfd, buf, 3, 0, (struct sockaddr *)&their_addr, addr_len)) == -1){
             exit(1);
         }
-        cout<<"Server S finished sending the availability status of code "<<bookcode<<" to the Main Server using UDP on port "<<SERVERS<<'.'<<endl;
+        if(isReserve){
+            if(refresh)
+                cout<<"The Server S finished sending the response and the updated room status to the main server."<<endl;
+            else
+                cout<<"The Server S finished sending the response to the main server."<<endl;
+        }else{
+            cout<<"The Server S finished sending the response to the main server."<<endl;
+        }
     }
 	freeaddrinfo(servinfo);
 	close(sockfd);

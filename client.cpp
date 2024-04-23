@@ -31,13 +31,13 @@ void *get_in_addr(struct sockaddr *sa)
 string encrypt(string unencrypted){
     for (int i = 0; i<unencrypted.length(); i++){
         if ('0' <= unencrypted[i] &&  unencrypted[i] <= '9'){
-            unencrypted[i] = (unencrypted[i] - '0' + 5) % 10 + '0';
+            unencrypted[i] = (unencrypted[i] - '0' + 3) % 10 + '0';
         }
         if ('a' <= unencrypted[i] &&  unencrypted[i] <= 'z'){
-            unencrypted[i] = (unencrypted[i] - 'a' + 5) % 26 + 'a';
+            unencrypted[i] = (unencrypted[i] - 'a' + 3) % 26 + 'a';
         }
         if ('A' <= unencrypted[i] &&  unencrypted[i] <= 'Z'){
-            unencrypted[i] = (unencrypted[i] - 'A' + 5) % 26 + 'A';
+            unencrypted[i] = (unencrypted[i] - 'A' + 3) % 26 + 'A';
         }
     }
     return unencrypted;

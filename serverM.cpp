@@ -154,10 +154,10 @@ void receiveRouteTable() {
             switch (port)
             {
             case SERVERH_UINT:
-                backenCode = 'H';
+                backenCode = 'U';
                 break;
             case SERVERL_UINT:
-                backenCode= 'L';
+                backenCode= 'D';
                 break;
             case SERVERS_UINT:
                 backenCode = 'S';
@@ -290,8 +290,8 @@ int main() {
 
 void handleClient(int clientSocket, map<string, string>& userMap) {
     char buffer[MAXDATASIZE];
+    string username, password;
     while (true) {
-        string username, password;
 
         // Step 1: Authenticate
         // Receive username
@@ -307,7 +307,11 @@ void handleClient(int clientSocket, map<string, string>& userMap) {
         if (password.length() == 0) {
             isGuest = true;
         }
-        cout<<"Main Server received username"<<username<<" and password "<<password<<" from the client using TCP over port "<<SERVERM_TCP<<"."<<endl;
+        if(isGuest){
+            cout<<"The main server received the guest request for "<< username <<" using TCP over port "<<SERVERM_TCP<<". The main server accepts "<<username<<" as a guest."<<endl;
+        }else{
+            cout<<"The main server received the authentication for "<< username <<" using TCP over port "<<SERVERM_TCP<<"."<<endl;
+        }
         // Authentication check
         auto it = userMap.find(username);
         if (it!=userMap.end()) {
@@ -315,23 +319,30 @@ void handleClient(int clientSocket, map<string, string>& userMap) {
                 // Send authentication success
                 strcpy(buffer, "3\0"); // Assuming '3' means guest
                 send(clientSocket, buffer, strlen(buffer), 0);
+                cout<<"The main server sent the guest response to the client."<<endl;
                 break;
             }else {
                 if (it->second == password) {
                     // Send authentication success
                     strcpy(buffer, "2\0"); // Assuming '2' means auth success
                     send(clientSocket, buffer, strlen(buffer), 0);
+                    cout<<"The main server sent the authentication result to the client."<<endl;
                     break;
                 } else {
                     // Send authentication failure
                     strcpy(buffer, "1\0"); // Assuming '1' means auth failure
                     send(clientSocket, buffer, strlen(buffer), 0);
+                    cout<<"The main server sent the authentication result to the client."<<endl;
                 }
             }
         } else {
             // Send authentication failure
             strcpy(buffer, "0\0"); // Assuming '0' means username not found
             send(clientSocket, buffer, strlen(buffer), 0);
+            if(isGuest)
+                cout<<"The main server sent the guest response to the client."<<endl;
+            else
+                cout<<"The main server sent the authentication result to the client."<<endl;
         }
         
     }
@@ -348,22 +359,38 @@ void handleClient(int clientSocket, map<string, string>& userMap) {
         if (buffer[0] == 'r') {
             isReserve = true;
         }
+        if(isReserve&&isGuest) {
+            memset(info, '\0', sizeof(info));
+            info[0] = '3';
+            cout<<username<<" cannot make a reservation."<<endl;
+            if ((numbytes = send(clientSocket,info, strlen(info)+1, 0)) == -1) {
+                            perror("send");
+                            exit(1);
+                        }
+            cout<<"The main server sent the error message to the client."<<endl;
+            continue;
+        }
         string code = string(buffer);
-        
-        std::cout<<"Main Server received the book request from client using TCP over port "<<SERVERM_TCP<<"."<<endl;
-        memset(info, '\0', sizeof(info));
         string bookcode = string(buffer+1);
+        if(isReserve)
+            cout<<"The main server has received the reservation request on Room "<<bookcode<<" from "<<username<<" using TCP over port "<<SERVERM_TCP<<"."<<endl;
+        else
+            cout<<"The main server has received the availability request on Room "<<bookcode<<" from "<<username<<" using TCP over port "<<SERVERM_TCP<<"."<<endl;
+        memset(info, '\0', sizeof(info));
         auto it = route_table.find(bookcode);
         if (it != route_table.end()) {
             switch(it->second) {
                 case SERVERH_UINT:
                     send_to_backen(SERVERH,code);
+                    cout<<"The main server sent a request to Server U"<<endl;
                     break;
                 case SERVERL_UINT:
                     send_to_backen(SERVERL, code);
+                    cout<<"The main server sent a request to Server D"<<endl;
                     break;
                 case SERVERS_UINT:
                     send_to_backen(SERVERS, code);
+                    cout<<"The main server sent a request to Server S"<<endl;
                     break;
                 default:
                     break;
@@ -371,10 +398,13 @@ void handleClient(int clientSocket, map<string, string>& userMap) {
         } else {
             if (code.at(1) == 'S'){
             send_to_backen(SERVERS,code);
-            }else if (code.at(1) == 'H'){
+            cout<<"The main server sent a request to Server S"<<endl;
+            }else if (code.at(1) == 'U'){
                 send_to_backen(SERVERH,code);
-            }else if (code.at(1) == 'L'){
+                cout<<"The main server sent a request to Server U"<<endl;
+            }else if (code.at(1) == 'D'){
                 send_to_backen(SERVERL,code);
+                cout<<"The main server sent a request to Server D"<<endl;
             }else{
                 cout<<"Did not find "<<buffer+1<<" in the book code list."<<endl;
                 memset(info, '\0', MAXDATASIZE);
@@ -390,39 +420,53 @@ void handleClient(int clientSocket, map<string, string>& userMap) {
         if((numbytes = recvfrom(sockfd_U, buf, MAXDATASIZE-1 , 0, (struct sockaddr *)&their_addr, &addr_len))==-1){
                 exit(1);
             }
-            cout << "The main server received the response from serverCS using UDP over port " 
-            << SERVERM << "." << endl;
-            strncpy(info, buf, MAXDATASIZE);
+        cout << "The main server received the response from serverCS using UDP over port " 
+        << SERVERM << "." << endl;
+        strncpy(info, buf, MAXDATASIZE);
         struct sockaddr_in *ipv4 = (struct sockaddr_in *)&their_addr;
         uint16_t port = ntohs(ipv4->sin_port);
+        char backenCode;
         switch (port)
         {
         case SERVERH_UINT:
-            cout<<"Main Server received from server H the book status result using UDP over port "<<SERVERM<<':'<<endl;
+            backenCode = 'U';
             break;
         case SERVERL_UINT:
-            cout<<"Main Server received from server L the book status result using UDP over port "<<SERVERM<<':'<<endl;
+            backenCode = 'D';
             break;
         case SERVERS_UINT:
-            cout<<"Main Server received from server S the book status result using UDP over port "<<SERVERM<<':'<<endl;
+            backenCode = 'S';
             break;
         default:
             perror("port error");
             break;
         }
-        if(info[0]=='0'){
-            cout<<"book "<<buffer+1<<" is available"<<endl;
-        }else if(info[0]=='1'){
-            cout<<"book "<<buffer+1<<" is not available"<<endl;
-        }else if(info[0]=='2'){
-            cout<<"Did not find "<<buffer+1<<" in the book code list."<<endl;
-        }else{
-            cout<<"info"<<info<<endl;
-            perror("error udp message");
+        if(info[1] == 'r'){
+            if(info[0]=='0'){
+                cout<<"The main server received the response and the updated room status from Server "<<backenCode<<" using UDP over port "<<SERVERM<<"."<<endl;
+                cout<<"The room status of Room "<<bookcode<<" has been updated."<<endl;
+            }else if(info[0]=='1'){
+                cout<<"The main server received the response from Server "<<backenCode<<" using UDP over port "<<SERVERM<<"."<<endl;
+            }else if(info[0]=='2'){
+                cout<<"The main server received the response from Server "<<backenCode<<" using UDP over port "<<SERVERM<<"."<<endl;
+            }else{
+                cout<<"info"<<info<<endl;
+                perror("error udp message");
+            }
         }
+        if(info[1] == 'a'){
+            cout<<"The main server received the response from Server "<<backenCode<<" using UDP over port "<<SERVERM<<"."<<endl;
+        }
+        
         if ((numbytes = send(new_fd,info, MAXDATASIZE, 0)) == -1) {
             perror("send");
             exit(1);
+        }
+        if(info[1]=='r'){
+            cout<<"The main server sent the reservation result to the client."<<endl;
+        }
+        if(info[1] == 'a'){
+            cout<<"The main server sent the availability information to the client."<<endl;
         }
         cout << "Main Server sent the book status to the client." << endl;
     }
