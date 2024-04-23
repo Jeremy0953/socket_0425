@@ -119,7 +119,10 @@ int main(int argc, char *argv[])
         if ((numbytes = send(sockfd, clientInput, sizeof(clientInput), 0)) == -1) {
             exit(1);
         }
-        cout << username << " sent an authentication request to the main server." <<endl;
+        if (isGuest)
+            cout << username << " sent an guest request to the main server." <<endl;
+        else
+            cout << username << " sent an authentication request to the main server." <<endl;
 
         if (recv(sockfd, clientInput,MAXDATASIZE, 0) == -1)
             perror("recv");
@@ -127,10 +130,10 @@ int main(int argc, char *argv[])
         
         // checkout the result
         if (clientInput[0] == '0'){
-            cout<<username<<" received the result of authentication from Main Server using TCP over port"<<clientPort<<". Authentication failed: Username not found."<<endl;
+            cout<<"Failed login: Username does not exist."<<endl;
         }
         else if (clientInput[0] == '1'){
-            cout<<username<<" received the result of authentication from Main Server using TCP over port"<<clientPort<<". Authentication failed: Password does not match."<<endl;
+            cout<<"Failed login: Password does not match."<<endl;
         }
         else if (clientInput[0] == '2'){
             cout<<username<<" received the result of authentication from Main Server using TCP over port "<<clientPort<<". Authentication is successful."<<endl;
@@ -139,19 +142,23 @@ int main(int argc, char *argv[])
             break;
         }
     }
-
+    if(isGuest)
+        cout<<"Welcome guest "<<username<<"!"<<endl;
+    else
+        cout<<"Welcome member "<<username<<"!"<<endl;
     string query_reply;
     // start the query
     while (true){
         string bookcode, category;
         bool isReserve = false;
+        cout << "Please enter the room code: ";
+        getline(cin, bookcode);
         string command;
         cout<<"Would you like to search for the availability or make a reservation? (Enter “Availability” to search for the availability or Enter “Reservation” to make a reservation ): <Availability or Reservation>"<<endl;
         getline(cin, command);
         isReserve = command == "Reservation";
         
-        cout << "Please enter book code to query: ";
-        getline(cin, bookcode);
+        
         
         // send bookcode to serverM
         memset(clientInput, '\0', sizeof(clientInput));
