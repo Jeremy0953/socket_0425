@@ -15,6 +15,7 @@
 #include <sstream>
 #include <string>
 #include <map>
+#include <unordered_map>
 #define LOCAL_HOST "127.0.0.1" 
 #define MAXDATASIZE 500
 #define SERVERS "41153"
@@ -54,6 +55,7 @@ int numbytes_U;
 
 bool isGuest = false;
 bool isReserve = false;
+unordered_map<string,uint16_t> route_table;
 // From Beej’s guide to network programming
 void* get_in_addr(struct sockaddr* sa)
 {
@@ -135,6 +137,41 @@ void createUDP(){
 	}
 	addr_len_U = sizeof their_addr_U;
 } 
+void receiveRouteTable() {
+    int count = 0;
+    while(count<3) {
+        memset(buf,0,MAXDATASIZE);
+        if((numbytes = recvfrom(sockfd_U, buf, MAXDATASIZE-1 , 0, (struct sockaddr *)&their_addr, &addr_len))==-1){
+                exit(1);
+            }
+        cout << "The main server received the response from serverCS using UDP over port " << SERVERM << "." << endl;
+        strncpy(info, buf, MAXDATASIZE);
+        struct sockaddr_in *ipv4 = (struct sockaddr_in *)&their_addr;
+        uint16_t port = ntohs(ipv4->sin_port);
+        if(buf[0] == '2'){
+            count++;
+            char backenCode;
+            switch (port)
+            {
+            case SERVERH_UINT:
+                backenCode = 'H';
+                break;
+            case SERVERL_UINT:
+                backenCode= 'L';
+                break;
+            case SERVERS_UINT:
+                backenCode = 'S';
+                break;
+            default:
+                perror("port error");
+                break;
+            }
+            cout<<"The main server has received the room status from Server "<<backenCode<<" using UDP over port "<<SERVERM<<".";
+            continue;
+        }
+        route_table[string(buf)] = port; 
+    }
+}
 // From Beej’s guide to network programming
 void send_to_backen(const char* backen_port, string input){
     memset(&hints_U, 0, sizeof hints_U);
@@ -223,6 +260,7 @@ int main() {
     listenTCP();
     map<string, string> maps;
     loadmember(maps);
+    receiveRouteTable();
 
     while (true) { 
         addr_len = sizeof their_addr;
@@ -314,24 +352,39 @@ void handleClient(int clientSocket, map<string, string>& userMap) {
         
         std::cout<<"Main Server received the book request from client using TCP over port "<<SERVERM_TCP<<"."<<endl;
         memset(info, '\0', sizeof(info));
-        if (code.at(1) == 'S'){
+        string bookcode = string(buffer+1);
+        auto it = route_table.find(bookcode);
+        if (it != route_table.end()) {
+            switch(it->second) {
+                case SERVERH_UINT:
+                    send_to_backen(SERVERH,code);
+                    break;
+                case SERVERL_UINT:
+                    send_to_backen(SERVERL, code);
+                    break;
+                case SERVERS_UINT:
+                    send_to_backen(SERVERS, code);
+                    break;
+                default:
+                    break;
+            }
+        } else {
+            if (code.at(1) == 'S'){
             send_to_backen(SERVERS,code);
-            std::cout<<"Found "<<buffer+1<<" located at Server S. Send to Server S."<<endl;
-        }else if (code.at(1) == 'H'){
-            send_to_backen(SERVERH,code);
-            std::cout<<"Found "<<buffer+1<<" located at Server H. Send to Server H."<<endl;
-        }else if (code.at(1) == 'L'){
-            send_to_backen(SERVERL,code);
-            std::cout<<"Found "<<buffer+1<<" located at Server L. Send to Server L."<<endl;
-        }else{
-            cout<<"Did not find "<<buffer+1<<" in the book code list."<<endl;
-            memset(info, '\0', MAXDATASIZE);
-                    info[1] = '2';
-                    if ((numbytes = send(clientSocket,info, strlen(info)+1, 0)) == -1) {
-                        perror("send");
-                        exit(1);
-                    }
-            continue;
+            }else if (code.at(1) == 'H'){
+                send_to_backen(SERVERH,code);
+            }else if (code.at(1) == 'L'){
+                send_to_backen(SERVERL,code);
+            }else{
+                cout<<"Did not find "<<buffer+1<<" in the book code list."<<endl;
+                memset(info, '\0', MAXDATASIZE);
+                        info[1] = '2';
+                        if ((numbytes = send(clientSocket,info, strlen(info)+1, 0)) == -1) {
+                            perror("send");
+                            exit(1);
+                        }
+                continue;
+            }
         }
         memset(buf,0,MAXDATASIZE);
         if((numbytes = recvfrom(sockfd_U, buf, MAXDATASIZE-1 , 0, (struct sockaddr *)&their_addr, &addr_len))==-1){

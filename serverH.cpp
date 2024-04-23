@@ -78,7 +78,30 @@ void loaddata(map<string,int> &books){
     file.close();
     return;
 }
+void sendBookStatus(map<string,int> &books){
+    cout<<"begin send."<<endl;
+    for(const auto & it : books){
+        memset(&hints, 0, sizeof hints);
+        hints.ai_family = AF_UNSPEC;
+        hints.ai_socktype = SOCK_DGRAM;
+        memset(buf,'0',MAXDATASIZE);
+        strncpy(buf, it.first.c_str(), MAXDATASIZE);
+        if ((rv = getaddrinfo(LOCAL_HOST, SERVERM, &hints, &servinfo)) != 0){
+            exit(1);
+        }
 
+        if ((numbytes = sendto(sockfd, buf, strlen(buf)+1, 0, servinfo->ai_addr, servinfo->ai_addrlen)) == -1){
+            exit(1);
+        }
+    }
+    cout<<"send end"<<endl;
+    memset(buf,'0',MAXDATASIZE);
+    buf[0] = '2'; //finished;
+    if ((numbytes = sendto(sockfd, buf, strlen(buf)+1, 0, servinfo->ai_addr, servinfo->ai_addrlen)) == -1){
+            exit(1);
+    }
+    cout<<"The Server <S/D/U> has sent the room status to the main server."<<endl;
+}
 int main(){
     createUDP();
     cout << "Server H is up and running using UDP on port " << SERVERH <<"." << endl;
@@ -86,6 +109,7 @@ int main(){
     string bookcode;
     loaddata(books);
     addr_len = sizeof their_addr;
+    sendBookStatus(books);
     while(true){
         if((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0, (struct sockaddr *)&their_addr, &addr_len))==-1){
             exit(1);

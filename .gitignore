@@ -1,7 +1,7 @@
 ./vscode/*
 
-client
-serverH
-serverL
-serverM
-serverS
+./client
+./serverH
+./serverL
+./serverM
+./serverS
