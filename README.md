@@ -83,3 +83,60 @@ f) The project works fine in regular conditions. It may crash if the user's inpu
 
 g) I used some codes from Beej's guide. I also checked the Q&A from the piazza.
 
+h) extra
+
+first install openssl library
+
+```bash
+sudo apt-get install openssl
+sudo apt-get install libssl-dev
+```
+先重新进行编译,编译带有多种加密方式的版本。
+```bash
+#make
+make clean
+make extra
+```
+然后执行密码生成脚本，将会生成member_sha256.txt member_md5.txt两个文件，存放着对应的加密后的文本
+```bash
+./gen
+```
+
+内容如下
+```bash
+# member_md5.txt
+d52e32f3a96a64786814ae9b5279fbe5, c4ebb9e8f7b78fe8ee8a8136b1f0db23
+e39e74fb4e80ba656f773669ed50315a, 1f6d762806ba3f3bae2cca46e146b3bc
+61409aa1fd47d4a5332de23cbf59a36f, aedf38a0c51c0ef104f597183fa13de3
+54a7b18f26374fc200ddedde0844f8ec, ac87d8331fe7f86e36579755a6d28ce3
+3e06fa3927cbdf4e9d93ba4541acce86, cb9e934a6bbe2fe6134579eaf480bfb6
+
+# memeber_sha256.txt
+9345a35a6fdf174dff7219282a3ae4879790dbb785c70f6fff91e32fafd66eab, af5a10777dbd71058a8565665a40a2472200e03a5708c6ccf5e17b500ca81cb1
+aebac53c46bbeff10fdd26ca0e2196a9bfc1d19bf88eb1efd65a36151c581051, 385cc817983514f20982ac7d490792e1aa21f65af9ee38f44e348c5f74084be8
+a8cfcd74832004951b4408cdb0a5dbcd8c7e52d43f7fe244bf720582e05241da, 7f0842f9d40334c18004b7daa77c5b10f6a228e055a086b5c5dedc05c2580afe
+4d8ca8e59c813f36e0321f8b35d0b522a1b9840db6827abed9c90734a6cd31e5, 78191c5c68b7d16643288563e2e786a5bc0d78028f0f68984d3b2d25df5487fb
+f089eaef57aba315bc0e1455985c0c8e40c247f073ce1f4c5a1f8ffde8773176, cb4addc378f860b6fb23b2085a84b7c835b28a199a76934e7dccc58e272f9a19
+
+```
+
+然后依次执行 serverM serverS serverD serverU client
+
+这里注意执行serverM的时候有三种选项
+```
+./serverM
+./serverM sha256
+./serverM md5
+```
+
+然后启动client的时候也有三种选项
+```
+./client
+./client sha256
+./client md5
+```
+注意：serverM和client后面的选项必须要对应，否则无法正常运行。
+
+
+
+
