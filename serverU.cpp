@@ -74,7 +74,6 @@ void loaddata(std::map<std::string, int>& rooms) {
 
     std::string line;
     while (std::getline(file, line)) {
-        std::istringstream iss(line);
         std::string key;
         int value;
 
@@ -84,7 +83,7 @@ void loaddata(std::map<std::string, int>& rooms) {
 
         // Replace commas with spaces for easier parsing
         std::replace(line.begin(), line.end(), ',', ' ');
-
+        std::istringstream iss(line);
         if (iss >> key >> value) { // Parse the key and value directly
             rooms[key] = value;
         } else {
@@ -141,7 +140,7 @@ int main(){
         }
         
         roomcode = string(buf+1);
-        if(isReserve){
+        if(!isReserve){
             cout<<"The Server U received an availability request from the main server."<<endl;
         }else {
             cout<<"The Server U received a reservation request from the main server."<<endl;

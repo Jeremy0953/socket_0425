@@ -344,6 +344,7 @@ void handleClient(int clientSocket, map<string, string>& userMap) {
         }
         string code = string(buffer);
         string bookcode = string(buffer+1);
+        cout<<"code"<<code<<endl;
         if(isReserve)
             cout<<"The main server has received the reservation request on Room "<<bookcode<<" from "<<username<<" using TCP over port "<<SERVERM_TCP<<"."<<endl;
         else
