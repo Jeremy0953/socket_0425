@@ -150,7 +150,7 @@ void receiveRouteTable() {
     int count = 0;
     while(count<3) {
         memset(buf,0,MAXDATASIZE);
-        if((numbytes = recvfrom(sockfd_U, buf, MAXDATASIZE-1 , 0, (struct sockaddr *)&their_addr, &addr_len))==-1){
+        if((numbytes = recvfrom(sockfd_U, buf, MAXDATASIZE-1 , 0, (struct sockaddr *)&their_addr, &addr_len_U))==-1){
                 exit(1);
             }
         strncpy(info, buf, MAXDATASIZE);
@@ -344,7 +344,6 @@ void handleClient(int clientSocket, map<string, string>& userMap) {
         }
         string code = string(buffer);
         string bookcode = string(buffer+1);
-        cout<<"code"<<code<<endl;
         if(isReserve)
             cout<<"The main server has received the reservation request on Room "<<bookcode<<" from "<<username<<" using TCP over port "<<SERVERM_TCP<<"."<<endl;
         else
@@ -440,7 +439,6 @@ void handleClient(int clientSocket, map<string, string>& userMap) {
         if(info[1] == 'a'){
             cout<<"The main server sent the availability information to the client."<<endl;
         }
-        cout << "Main Server sent the book status to the client." << endl;
     }
 
     close(clientSocket);
